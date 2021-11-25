@@ -79,9 +79,18 @@ const createAndSaveExercise = (exerciseData, done) => {
     });
 }
 
+//retrieve functions
+const getAllUsers = (done) => {
+    User.find((err, users)=>{
+        if(err) return console.log(err);
+        done(null, users, "found users");
+    });
+}
+
 module.exports = {
     createAndSaveUser : createAndSaveUser,
     createAndSaveExercise : createAndSaveExercise,
+    getAllUsers: getAllUsers,
 }
 
 

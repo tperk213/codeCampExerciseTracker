@@ -34,6 +34,13 @@ app.post('/api/users', (req, res) =>{
   });
 });
 
+app.get('/api/users', (req, res)=>{
+  dbhandler.getAllUsers((err, users, msg)=>{
+    console.log(msg);
+    res.json(users);
+  });
+});
+
 app.post('/api/users/:_id/exercises', (req, res)=>{
 
   var data = {
