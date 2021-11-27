@@ -131,15 +131,24 @@ const getLog = async (userId, params) => {
     }
 
     //change log dates to date strings
-    filteredLog = filteredLog.map((exercise)=>{
-        exercise.date = exercise.date.toDateString();
-        return exercise;
-    })
+    var formatedLog = []
+    for(var log of filteredLog){
+        formatedLog.push({
+            _id: log._id,
+            description: log.description,
+            duration: log.duration,
+            date : log.date.toDateString()
+        })
+    }
+    // filteredLog = filteredLog.map((exercise)=>{
+    //     exercise.date = exercise.date.toDateString();
+    //     return exercise;
+    // })
 
     var objectToReturn = {
         _id : user._id,
         username : user.username,
-        log: filteredLog,
+        log: formatedLog,
         count: user.count
     }
     return objectToReturn;
