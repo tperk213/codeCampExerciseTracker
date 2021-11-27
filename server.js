@@ -92,11 +92,11 @@ app.get('/api/users/:_id/logs', (req, res)=>{
   } 
   
   dbhandler.getLog(userId, params)
-  .then((log)=>{
-    if(!log){
+  .then((user)=>{
+    if(!user){
       res.send("error finding person");
     }
-    res.json(log);
+    res.json(user);
   });
 });
 

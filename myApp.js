@@ -72,7 +72,7 @@ const createAndSaveExercise = async (userId, exercise) => {
     }
 
     var updatedUser = await User
-    .findByIdAndUpdate(userId, {$push: {exercise: newExercise._id}, $inc : {"count": 1}}, {new:true, useFindAndModify: false})
+    .findByIdAndUpdate(userId, {$push: {log: newExercise._id}, $inc : {"count": 1}}, {new:true, useFindAndModify: false})
     .populate("exercise");
     if(!updatedUser){
         console.log("couldnt add exercise to user");
@@ -129,6 +129,12 @@ const getLog = async (userId, params) => {
     if(params.limit){
         filteredLog = filteredLog.slice(0,params.limit);
     }
+
+    //change log dates to date strings
+    filteredLog = filteredLog.map((exercise)=>{
+        exercise.date = exercise.date.toDateString();
+        return exercise;
+    })
 
     var objectToReturn = {
         _id : user._id,
