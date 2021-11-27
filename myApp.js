@@ -82,7 +82,7 @@ const createAndSaveExercise = async (userId, exercise) => {
     var objectToReturn = {
         _id:user._id,
         username: user.username,
-        date: newExercise.date,
+        date: newExercise.date.toDateString(),
         duration: newExercise.duration,
         description: newExercise.description
     }
