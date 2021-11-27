@@ -14,12 +14,12 @@ mongoose.connect(
 //setup user schema
 const userSchema = new Schema({
     username: {type: String, required: true,  unique:true, dropDups:true},
-    exercise: {type: Array, default: []}
+    log: [{type: Schema.Types.ObjectId, ref: 'Exercise'}],
+    count: {type: Number, default:0},
 });
 
 //set up exercise schema 
 const exerciseSchema = new Schema({
-    username:{type: String, required:true},
     description: String,
     duration: Number,
     date: {type: Date, },
@@ -57,26 +57,31 @@ const updateUserExercise = (exerciseData, done) => {
         done(null, user);
     });
 }
-const createAndSaveExercise = (exerciseData, done) => {
-    var username;
-    var o_id = new ObjectId(exerciseData.id);
-    User.find({_id:o_id}).exec((err, user)=>{
-        username = user.username;
-        console.log("user name for id:"+exerciseData.id);
-        console.log("is :"+username);
-        
-    });
-    var currentExercise = new Exercise({
-        username: username,
-        description: exerciseData.description,
-        duration: exerciseData.duration,
-        date: exerciseData.date,
-    })
+const createAndSaveExercise = async (userId, exercise) => {
+    var user = await User.findById(userId);
+    if(!user){
+        //error
+        console.log("couldnt find user");
+        return
+    }
 
-    currentExercise.save((err, res) =>{
-        if(err) return console.log(err);
-        done(null, res);
-    });
+    var newExercise = await Exercise.create(exercise);
+    if(!newExercise){
+        console.log("couldnt create exercise");
+        return
+    }
+
+    var updatedUser = await User
+    .findByIdAndUpdate(userId, {$push: {exercise: newExercise._id}, $inc : {"count": 1}}, {new:true, useFindAndModify: false})
+    .populate("exercise");
+    if(!updatedUser){
+        console.log("couldnt add exercise to user");
+        return
+    }
+
+
+    return updatedUser;
+    
 }
 
 //retrieve functions
@@ -87,10 +92,64 @@ const getAllUsers = (done) => {
     });
 }
 
+const getLog = async (userId, params) => {
+    
+    
+    /////////working here
+    var user = await User.findById(userId).populate("log");
+    var log = user.log;
+
+    var filteredLog = [];
+    //get logs between from and to
+    if(params.from){
+        for (var foundLog of log ){
+            console.log(foundLog);
+             if((foundLog.date >= params.from) && (foundLog.date <= params.to)){
+                filteredLog.push(foundLog); 
+            }
+         }    
+    }else{
+        for (var foundLog of log ){
+            console.log(foundLog);
+            if(foundLog.date <= params.to){
+                filteredLog.push(foundLog); 
+            }
+         }    
+    }
+    //sort by date
+    filteredLog = filteredLog.sort((a,b)=>a.date.getTime()-b.date.getTime());
+
+    if(params.limit){
+        filteredLog = filteredLog.slice(0,params.limit);
+    }
+
+    var objectToReturn = {
+        _id : user._id,
+        username : user.username,
+        log: filteredLog,
+        count: user.count
+    }
+    return objectToReturn;
+}
+
+const updateCount = async () => {
+    var users = [];
+    for await (var user of User.find()){
+        user.count = user.log.length;
+        await user.save();
+        users.push(user); 
+    }
+    return(users);
+}
+
+
+
 module.exports = {
     createAndSaveUser : createAndSaveUser,
     createAndSaveExercise : createAndSaveExercise,
     getAllUsers: getAllUsers,
+    getLog: getLog,
+    updateCount: updateCount,
 }
 
 

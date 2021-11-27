@@ -41,23 +41,77 @@ app.get('/api/users', (req, res)=>{
   });
 });
 
-app.post('/api/users/:_id/exercises', (req, res)=>{
-
-  var data = {
-
+//You can POST to /api/users/:_id/exercises with form data description, duration, and optionally date. If no date is supplied, the current date will be used.
+app.post('/api/users/:_id/exercises', (req, res, next)=>{
+  //validation of body params goes here
+  //validation pattern
+  // var notFound = []
+  // if(req.body.username === ""){
+  //   notFound.push("`userName`");
+  // }
+  // if(notFound.length > 0) return res.send(notFound.toString() + "required");
+  // else next();
+  next();
+},
+(req,res) => {
+  var exerciseData = {
     description : req.body.description,
     duration : req.body.duration,
-    id : req.params._id,
     date : req.body.date ? new Date(req.body.date) : new Date(Date.now())
   }
-  console.log(data);
-  //res.json(data);
+  var promise = dbhandler.createAndSaveExercise(req.params._id, exerciseData);
+  promise.then((updatedUser)=>{
+    if(!updatedUser){
+      res.send("failure");
+      return
+    }
   
-  createAndSaveExercise(data, (user)=>{
-    res.json({
-      founduser:user
-    });
+    res.json(updatedUser);
+  })
+  
+  // promise
+  //   .then((data) =>{
+  //     return res.json(data);
+  //   })
+  //   .catch((reason)=>{
+  //       return res.send(reason);
+  //   });
+});
+
+
+//get logs
+app.get('/api/users/:_id/logs', (req, res)=>{
+  //validation to make sure dates are actually dates
+  
+  
+  var userId = req.params._id;
+  var params = {
+    from : req.query.from ? new Date(req.query.from) : null,
+    to : req.query.to ? new Date(req.query.to) : Date.now(),
+    limit : req.query.limit ? req.query.limit : null,
+  } 
+  
+  dbhandler.getLog(userId, params)
+  .then((log)=>{
+    if(!log){
+      res.send("error finding person");
+    }
+    res.json(log);
   });
+});
+
+app.get('/api/users/update', (req, res)=>{
+  dbhandler.updateCount().
+  then((response)=>{
+    res.send(response);
+  })
+});
+
+app.get('/api/users/:id/test', (req,res)=>{
+  if(req.query.from){
+    res.send(`from is ${req.query.from}`)
+  }
+  res.send("working");
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
